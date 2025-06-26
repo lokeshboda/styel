@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StyleMate</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 min-h-screen font-sans">
+
+  <div class="max-w-4xl mx-auto py-12 px-6">
+    <h1 class="text-4xl font-bold text-center mb-8 text-purple-700">👗 StyleMate: Fashion Recommender</h1>
+
+    <form id="filterForm" class="bg-white rounded-lg shadow p-6 mb-10 flex flex-col md:flex-row gap-4 items-center justify-between">
+      <select id="category" class="w-full md:w-1/3 border rounded p-2 text-gray-700">
+        {% for c in categories %}
+        <option value="{{c}}">{{c}}</option>
+        {% endfor %}
+      </select>
+      <input type="number" id="maxPrice" class="w-full md:w-1/3 border rounded p-2" placeholder="Enter price(From 100000) (₹)">
+      <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded transition duration-300">
+        Show Styles
+      </button>
+    </form>
+
+    <div id="results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Product cards will be inserted here -->
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("filterForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const cat = document.getElementById("category").value;
+      const maxp = document.getElementById("maxPrice").value;
+
+      try {
+        const res = await fetch("/recommend", {
+          method: "POST",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category: cat, max_price: maxp })
+        });
+
+        const data = await res.json();
+        const cont = document.getElementById("results");
+        if (data.length === 0) {
+          cont.innerHTML = "<p class='text-center col-span-full text-red-500 font-semibold'>No results found. Try increasing price.</p>";
+          return;
+        }
+
+    cont.innerHTML = data.map(item => `
+        <div class="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition duration-300">
+            <img src="https://source.unsplash.com/300x200/?fashion,${item.ProductBrand}" alt="fashion image" class="w-full h-40 object-cover rounded mb-4">
+            <h2 class="text-lg font-semibold text-gray-800">${item.ProductName}</h2>
+            <p class="text-sm text-gray-600 mt-1">Color: ${item.PrimaryColor || 'N/A'}</p>
+            <p class="text-sm text-gray-600">Price: ₹${item["Price (INR)"]}</p>
+        </div>
+    `).join("");
+
+      } catch (err) {
+        console.error("Error fetching:", err);
+      }
+    });
+  </script>
+
+</body>
+</html>
